@@ -1,0 +1,26 @@
+.seat-sold { fill: #dc2626; }
+.seat-reserved { fill: #f59e0b; }
+.seat-held { fill: #6b7280; }
+.seat-selected { fill: #2563eb; }
+.seat-available { fill: #10b981; }
+
+.seat {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  stroke: rgba(0,0,0,0.2);
+  stroke-width: 1;
+}
+
+.seat:hover {
+  transform: scale(1.1);
+  stroke: #2563eb;
+}
+
+.seat-selected {
+  stroke: #1d4ed8;
+}
+
+.seat-focused {
+  stroke: #1d4ed8;
+  stroke-width: 2;
+}
