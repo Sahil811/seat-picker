@@ -2,6 +2,8 @@
 
 A React + TypeScript application that renders an interactive seating map for events. Users can select up to 8 seats, view details, and navigate using both mouse and keyboard controls.
 
+![Application preview](src/assets/app-view.png)
+
 ## Quick Start
 
 ```bash
