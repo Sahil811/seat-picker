@@ -21,7 +21,7 @@ export const useZoom = (
   const MIN = 0.4;
   const MAX = 6;
 
-  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  const clamp = useCallback((v: number, min: number, max: number) => Math.min(max, Math.max(min, v)), []);
 
   const getMetrics = useCallback(() => {
     const el = svgRef.current;
@@ -47,8 +47,8 @@ export const useZoom = (
     return { ux, uy };
   }, [getMetrics, scale, tx, ty]);
 
-  const zoomIn = useCallback(() => set((s) => ({ ...s, scale: clamp(s.scale * 1.2, MIN, MAX) })), []);
-  const zoomOut = useCallback(() => set((s) => ({ ...s, scale: clamp(s.scale / 1.2, MIN, MAX) })), []);
+  const zoomIn = useCallback(() => set((s) => ({ ...s, scale: clamp(s.scale * 1.2, MIN, MAX) })), [clamp]);
+  const zoomOut = useCallback(() => set((s) => ({ ...s, scale: clamp(s.scale / 1.2, MIN, MAX) })), [clamp]);
   const reset = useCallback(() => set({ scale: 1, tx: 0, ty: 0 }), []);
 
   const fitToScreen = useCallback((paddingPct = 0.92) => {
@@ -62,7 +62,7 @@ export const useZoom = (
     const newTx = screenLeft / (s * baseScale);
     const newTy = screenTop / (s * baseScale);
     set({ scale: s, tx: newTx, ty: newTy });
-  }, [getMetrics]);
+  }, [getMetrics, clamp]);
 
   const onWheel: React.WheelEventHandler<SVGSVGElement> = useCallback((e) => {
     e.preventDefault();

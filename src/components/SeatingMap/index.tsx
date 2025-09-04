@@ -46,7 +46,7 @@ export const SeatingMap: React.FC = () => {
       tabIndex={0}
       role="application"
       aria-label={`${venue?.name} seating map`}
-      aria-roledescription="Interactive, zoomable seating map. Use mouse wheel or +/− to zoom, click-drag or arrow keys to pan, and click seats to select."
+      aria-roledescription="Interactive, zoom-enabled seating map. Use mouse wheel or +/− to zoom, click-drag or arrow keys to pan, and click seats to select."
     >
       <svg
         ref={svgRef}

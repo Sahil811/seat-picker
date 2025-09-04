@@ -22,6 +22,19 @@ export const VirtualizedSeats: React.FC<VirtualizedSeatsProps> = ({ section }) =
   );
   
   // For large sections, implement virtualization
+  const renderItem = ({ index }: { index: number }) => {
+    const seat = allSeats[index];
+    if (!seat) return null;
+    return (
+      <Seat
+        key={seat.id}
+        seat={seat}
+        isSelected={selectedSeatIds.has(seat.id)}
+        isFocused={focusedSeatId === seat.id}
+      />
+    );
+  };
+
   if (allSeats.length > 1000) {
     return (
       <List
@@ -30,18 +43,7 @@ export const VirtualizedSeats: React.FC<VirtualizedSeatsProps> = ({ section }) =
         itemSize={32}
         width={800}
       >
-        {({ index }: { index: number }) => {
-          const seat = allSeats[index];
-          if (!seat) return null;
-          return (
-            <Seat
-              key={seat.id}
-              seat={seat}
-              isSelected={selectedSeatIds.has(seat.id)}
-              isFocused={focusedSeatId === seat.id}
-            />
-          );
-        }}
+        {renderItem}
       </List>
     );
   }
