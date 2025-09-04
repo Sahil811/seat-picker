@@ -43,6 +43,7 @@ export const VirtualizedSeats: React.FC<VirtualizedSeatsProps> = ({ section }) =
         itemSize={32}
         width={800}
       >
+        {/* @ts-ignore */}
         {renderItem}
       </List>
     );
