@@ -1,15 +1,31 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Header from './components/Header';
 import { SeatingMap } from './components/SeatingMap';
 import { useSeatingStore } from './store/seatingStore';
-import { mockVenue } from './data/mockVenue';
+import type { Venue } from './types/venue';
 
 function App() {
   const loadVenue = useSeatingStore((state) => state.loadVenue);
+  const setLoading = useSeatingStore((state) => state.setLoading);
 
   useEffect(() => {
-    loadVenue(mockVenue);
-  }, [loadVenue]);
+    const fetchVenue = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/venue.json');
+        if (!response.ok) {
+          throw new Error('Failed to load venue data');
+        }
+        const venueData: Venue = await response.json();
+        loadVenue(venueData);
+      } catch (error) {
+        console.error('Error loading venue:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchVenue();
+  }, [loadVenue, setLoading]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-900">

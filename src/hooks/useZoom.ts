@@ -6,6 +6,9 @@ type Handlers = {
   onMouseMove: React.MouseEventHandler<SVGSVGElement>;
   onMouseUp: React.MouseEventHandler<SVGSVGElement>;
   onMouseLeave: React.MouseEventHandler<SVGSVGElement>;
+  onTouchStart: React.TouchEventHandler<SVGSVGElement>;
+  onTouchMove: React.TouchEventHandler<SVGSVGElement>;
+  onTouchEnd: React.TouchEventHandler<SVGSVGElement>;
 };
 
 export type ViewBoxDims = { width: number; height: number };
@@ -18,6 +21,7 @@ export const useZoom = (
   const [{ scale, tx, ty }, set] = useState({ scale: 1, tx: 0, ty: 0 });
   const dragging = useRef(false);
   const last = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTouchDistance = useRef<number>(0);
   const MIN = 0.4;
   const MAX = 6;
 
@@ -103,6 +107,82 @@ export const useZoom = (
     dragging.current = false;
   }, []);
 
+  // Touch event handlers for mobile support
+  const onTouchStart: React.TouchEventHandler<SVGSVGElement> = useCallback((e) => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      // Single touch - start dragging
+      dragging.current = true;
+      const touch = e.touches[0];
+      last.current = { x: touch.clientX, y: touch.clientY };
+    } else if (e.touches.length === 2) {
+      // Two touches - prepare for pinch zoom
+      dragging.current = false;
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      lastTouchDistance.current = distance;
+    }
+  }, []);
+
+  const onTouchMove: React.TouchEventHandler<SVGSVGElement> = useCallback((e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && dragging.current) {
+      // Single touch - pan
+      const m = getMetrics();
+      if (!m) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - last.current.x;
+      const dy = touch.clientY - last.current.y;
+      last.current = { x: touch.clientX, y: touch.clientY };
+      set((s) => ({
+        ...s,
+        tx: s.tx + dx / (s.scale * m.baseScale),
+        ty: s.ty + dy / (s.scale * m.baseScale),
+      }));
+    } else if (e.touches.length === 2) {
+      // Two touches - pinch zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      
+      if (lastTouchDistance.current > 0) {
+        const scaleChange = distance / lastTouchDistance.current;
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+        
+        // Get the point in user coordinates before zoom
+        const beforeZoom = screenToUser(centerX, centerY);
+        
+        set((s) => {
+          const newScale = clamp(s.scale * scaleChange, MIN, MAX);
+          // Get the point in user coordinates after zoom
+          const afterZoom = screenToUser(centerX, centerY, { scale: newScale, tx: s.tx, ty: s.ty });
+          
+          return {
+            scale: newScale,
+            tx: s.tx + (beforeZoom.ux - afterZoom.ux),
+            ty: s.ty + (beforeZoom.uy - afterZoom.uy),
+          };
+        });
+      }
+      
+      lastTouchDistance.current = distance;
+    }
+  }, [getMetrics, screenToUser, clamp]);
+
+  const onTouchEnd: React.TouchEventHandler<SVGSVGElement> = useCallback((e) => {
+    e.preventDefault();
+    dragging.current = false;
+    lastTouchDistance.current = 0;
+  }, []);
+
   // Allow programmatic panning by pixel amounts (converted to SVG user units)
   const panBy = useCallback((dxPx: number, dyPx: number) => {
     const m = getMetrics();
@@ -115,8 +195,17 @@ export const useZoom = (
   }, [getMetrics]);
 
   const handlers: Handlers = useMemo(
-    () => ({ onWheel, onMouseDown, onMouseMove, onMouseUp: stopDrag, onMouseLeave: stopDrag }),
-    [onWheel, onMouseDown, onMouseMove, stopDrag]
+    () => ({ 
+      onWheel, 
+      onMouseDown, 
+      onMouseMove, 
+      onMouseUp: stopDrag, 
+      onMouseLeave: stopDrag,
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd
+    }),
+    [onWheel, onMouseDown, onMouseMove, stopDrag, onTouchStart, onTouchMove, onTouchEnd]
   );
 
   const transform = useMemo(() => `translate(${tx}, ${ty}) scale(${scale})`, [tx, ty, scale]);
