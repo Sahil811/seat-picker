@@ -27,7 +27,7 @@ export const VirtualizedSeats: React.FC<VirtualizedSeatsProps> = ({ section }) =
       <List
         height={600}
         itemCount={allSeats.length}
-        itemSize={30}
+        itemSize={32}
         width={800}
       >
         {({ index }: { index: number }) => {
